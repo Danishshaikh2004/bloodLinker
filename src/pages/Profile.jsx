@@ -1,115 +1,58 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
 
 const Profile = () => {
-  const [userData, setUserData] = useState(null)
+  const { currentUser, userProfile, logout } = useAuth()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Get user data from localStorage (simulating database storage)
-    const storedUserData = localStorage.getItem('bloodLinkUser')
-    if (storedUserData) {
-      setUserData(JSON.parse(storedUserData))
+    // Check if user is logged in
+    if (!currentUser) {
+      navigate('/login')
+      return
     }
     setLoading(false)
-  }, [])
+  }, [currentUser, navigate])
 
-  const handleLogout = () => {
-    localStorage.removeItem('bloodLinkUser')
-    setUserData(null)
-    // Redirect to home or login page
-    window.location.href = '/'
+  const handleLogout = async () => {
+    try {
+      await logout()
+      navigate('/')
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
   }
 
   if (loading) {
     return (
-      <div style={{ paddingTop: '64px', minHeight: '100vh', backgroundColor: '#f9fafb', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ width: '40px', height: '40px', border: '4px solid #e5e7eb', borderTop: '4px solid #dc2626', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 20px' }}></div>
-          <p style={{ color: '#6b7280' }}>Loading profile...</p>
+      <div className="min-h-screen bg-gray-50 pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading profile...</p>
         </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     )
   }
 
-  if (!userData) {
-    return (
-      <div style={{ paddingTop: '64px', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-        <div style={{ maxWidth: '500px', margin: '0 auto', padding: '48px 16px', textAlign: 'center' }}>
-          <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '32px' }}>
-            <div style={{
-              width: '64px',
-              height: '64px',
-              borderRadius: '50%',
-              backgroundColor: '#fef2f2',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 16px'
-            }}>
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
-                <path d="M9 12l2 2 4-4"></path>
-                <circle cx="12" cy="12" r="10"></circle>
-              </svg>
-            </div>
-            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-              Profile Not Found
-            </h2>
-            <p style={{ color: '#4b5563', marginBottom: '24px' }}>
-              You need to register first to view your profile.
-            </p>
-            <Link
-              to="/register"
-              style={{
-                backgroundColor: '#dc2626',
-                color: 'white',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: '600',
-                transition: 'all 0.2s ease',
-                display: 'inline-block'
-              }}
-            >
-              Register Now
-            </Link>
-          </div>
-        </div>
-      </div>
-    )
+  if (!currentUser) {
+    return null // Will redirect to login
   }
 
   return (
-    <div style={{ paddingTop: '64px', minHeight: '100vh', backgroundColor: '#f9fafb' }}>
-      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '48px 16px' }}>
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+          <div className="flex justify-between items-center">
             <div>
-              <h1 style={{ fontSize: '30px', fontWeight: '700', color: '#111827', marginBottom: '8px' }}>
-                My Profile
-              </h1>
-              <p style={{ color: '#4b5563' }}>Manage your account information</p>
+              <h1 className="text-3xl font-bold text-gray-900">My Profile</h1>
+              <p className="text-gray-600 mt-1">Manage your account information</p>
             </div>
             <button
               onClick={handleLogout}
-              style={{
-                backgroundColor: '#ef4444',
-                color: 'white',
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease'
-              }}
+              className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
             >
               Logout
             </button>
@@ -117,218 +60,137 @@ const Profile = () => {
         </div>
 
         {/* Profile Information */}
-        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '32px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '24px' }}>
-            Personal Information
-          </h2>
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Personal Information</h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Full Name */}
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827'
-              }}>
-                {userData.fullName}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900">
+                {userProfile?.displayName || currentUser.displayName || 'Not specified'}
               </div>
             </div>
 
             {/* Email */}
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827'
-              }}>
-                {userData.email}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900">
+                {currentUser.email}
               </div>
             </div>
 
             {/* Phone */}
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827'
-              }}>
-                {userData.phone}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900">
+                {userProfile?.phone || 'Not specified'}
               </div>
             </div>
 
             {/* Blood Group */}
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Blood Group
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827',
-                fontWeight: '600'
-              }}>
-                {userData.bloodGroup}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900 font-semibold">
+                {userProfile?.bloodGroup || 'Not specified'}
               </div>
             </div>
 
             {/* Location */}
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Location
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827'
-              }}>
-                {userData.location}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900">
+                {userProfile?.location || 'Not specified'}
               </div>
             </div>
 
             {/* Last Donation */}
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Last Donation Date
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827'
-              }}>
-                {userData.lastDonation ? new Date(userData.lastDonation).toLocaleDateString() : 'Not specified'}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900">
+                {userProfile?.lastDonation
+                  ? new Date(userProfile.lastDonation).toLocaleDateString()
+                  : 'Not specified'
+                }
               </div>
             </div>
           </div>
 
           {/* Registration Date */}
-          <div style={{ marginTop: '32px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+          <div className="mt-6 pt-6 border-t border-gray-200">
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '8px' }}>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Member Since
               </label>
-              <div style={{
-                padding: '12px 16px',
-                backgroundColor: '#f9fafb',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px',
-                fontSize: '16px',
-                color: '#111827'
-              }}>
-                {userData.registrationDate ? new Date(userData.registrationDate).toLocaleDateString() : 'Recently'}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-gray-900">
+                {userProfile?.createdAt
+                  ? new Date(userProfile.createdAt).toLocaleDateString()
+                  : 'Recently'
+                }
               </div>
             </div>
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div style={{ backgroundColor: 'white', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '32px', marginTop: '24px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#111827', marginBottom: '24px' }}>
-            Quick Actions
-          </h2>
+        <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link
               to="/donate"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px',
-                backgroundColor: '#dcfce7',
-                border: '1px solid #bbf7d0',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: '#166534',
-                transition: 'all 0.2s ease'
-              }}
+              className="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg text-green-800 hover:bg-green-100 transition-colors"
             >
-              <div style={{ marginRight: '12px' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              <div className="mr-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M22 12h-4l-3 9L9 3l-3 9H2" />
                 </svg>
               </div>
               <div>
-                <div style={{ fontWeight: '600', fontSize: '16px' }}>Donate Blood</div>
-                <div style={{ fontSize: '14px', opacity: '0.8' }}>Save a life today</div>
+                <div className="font-semibold">Donate Blood</div>
+                <div className="text-sm opacity-75">Save a life today</div>
               </div>
             </Link>
 
             <Link
               to="/request"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px',
-                backgroundColor: '#fef3c7',
-                border: '1px solid #fde68a',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: '#92400e',
-                transition: 'all 0.2s ease'
-              }}
+              className="flex items-center p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 hover:bg-yellow-100 transition-colors"
             >
-              <div style={{ marginRight: '12px' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12,6 12,12 16,14"></polyline>
+              <div className="mr-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
               <div>
-                <div style={{ fontWeight: '600', fontSize: '16px' }}>Request Blood</div>
-                <div style={{ fontSize: '14px', opacity: '0.8' }}>Find donors</div>
+                <div className="font-semibold">Request Blood</div>
+                <div className="text-sm opacity-75">Find donors</div>
               </div>
             </Link>
 
             <Link
               to="/dashboard"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                padding: '16px',
-                backgroundColor: '#dbeafe',
-                border: '1px solid #bfdbfe',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                color: '#1e40af',
-                transition: 'all 0.2s ease'
-              }}
+              className="flex items-center p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 hover:bg-blue-100 transition-colors"
             >
-              <div style={{ marginRight: '12px' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <line x1="9" y1="9" x2="15" y2="15"></line>
-                  <line x1="15" y1="9" x2="9" y2="15"></line>
+              <div className="mr-3">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
               </div>
               <div>
-                <div style={{ fontWeight: '600', fontSize: '16px' }}>Dashboard</div>
-                <div style={{ fontSize: '14px', opacity: '0.8' }}>View statistics</div>
+                <div className="font-semibold">Dashboard</div>
+                <div className="text-sm opacity-75">View statistics</div>
               </div>
             </Link>
           </div>
