@@ -48,7 +48,10 @@ export const AuthProvider = ({ children }) => {
     sendPasswordReset: AuthService.sendPasswordReset,
     // Database methods
     updateUserProfile: DatabaseService.updateUserProfile,
-    updateLastDonation: DatabaseService.updateLastDonation
+    updateLastDonation: DatabaseService.updateLastDonation,
+    saveDonation: DatabaseService.saveDonation,
+    saveBloodRequest: DatabaseService.saveBloodRequest,
+    updateUserProfileWithRequest: DatabaseService.updateUserProfileWithRequest
   };
 
   return (

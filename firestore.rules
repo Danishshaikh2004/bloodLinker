@@ -20,5 +20,14 @@ service cloud.firestore {
     match /users {
       allow read: if request.auth != null;
     }
+
+    // Allow read access to donations and blood requests for matching purposes
+    match /donations {
+      allow read: if request.auth != null;
+    }
+
+    match /blood_requests {
+      allow read: if request.auth != null;
+    }
   }
 }

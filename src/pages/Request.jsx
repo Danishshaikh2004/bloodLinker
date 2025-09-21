@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { DatabaseService } from '../services/databaseService'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../services/firebase'
 
 const Request = () => {
   const navigate = useNavigate()
@@ -14,8 +12,7 @@ const Request = () => {
     contact: '',
     bloodGroup: '',
     urgency: '',
-    prescription: null,
-    hospitalReport: null
+    prescriptionDetails: ''
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -59,6 +56,7 @@ const Request = () => {
       newErrors.contact = 'Enter valid phone or email'
     if (!formData.bloodGroup) newErrors.bloodGroup = 'Blood group is required'
     if (!formData.urgency) newErrors.urgency = 'Urgency level is required'
+    if (!formData.prescriptionDetails.trim()) newErrors.prescriptionDetails = 'Prescription details are required'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -67,11 +65,6 @@ const Request = () => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
-  }
-
-  const handleFileChange = (e) => {
-    const { name, files } = e.target
-    setFormData(prev => ({ ...prev, [name]: files[0] }))
   }
 
   const handleSubmit = async (e) => {
@@ -84,33 +77,44 @@ const Request = () => {
       console.log('Current user:', currentUser)
       console.log('Form data:', formData)
 
-      // Save blood request to Firebase
+      // Prepare request data
       const requestData = {
-        ...formData,
+        name: formData.name,
+        contact: formData.contact,
+        bloodGroup: formData.bloodGroup,
+        urgency: formData.urgency,
+        prescriptionDetails: formData.prescriptionDetails,
         userId: currentUser.uid,
         userEmail: currentUser.email,
         status: 'pending',
-        requestType: 'blood_request',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        requestType: 'blood_request'
       }
 
       console.log('Request data to save:', requestData)
 
-      // Save to 'blood_requests' collection in Firestore
+      // Save blood request using DatabaseService (no files to upload)
       console.log('Saving to blood_requests collection...')
-      await setDoc(doc(db, 'blood_requests', `${currentUser.uid}_${Date.now()}`), requestData)
+      const result = await DatabaseService.saveBloodRequest(requestData, {})
 
-      console.log('Blood request saved successfully!')
-      alert('Your blood request has been submitted! Donor matches will contact you soon.')
-      setFormData({
-        name: '',
-        contact: '',
-        bloodGroup: '',
-        urgency: '',
-        prescription: null,
-        hospitalReport: null
-      })
+      if (result.success) {
+        // Update user profile with request information
+        console.log('Updating user profile...')
+        await DatabaseService.updateUserProfileWithRequest(currentUser.uid, requestData)
+
+        console.log('Blood request saved successfully!')
+        alert('Your blood request has been submitted! Donor matches will contact you soon.')
+
+        // Reset form
+        setFormData({
+          name: '',
+          contact: '',
+          bloodGroup: '',
+          urgency: '',
+          prescriptionDetails: ''
+        })
+      } else {
+        throw new Error(result.error)
+      }
     } catch (error) {
       console.error('Error saving blood request:', error)
       console.error('Error details:', {
@@ -127,7 +131,7 @@ const Request = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 pt-16 flex items-center justify-center px-4">
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12">
-        
+
         {/* Left Info */}
         <div className="flex flex-col justify-center space-y-6">
           <h1 className="text-4xl font-bold text-gray-900">Request Blood</h1>
@@ -244,16 +248,20 @@ const Request = () => {
               {errors.urgency && <p className="text-red-600 text-sm mt-1">{errors.urgency}</p>}
             </div>
 
-            {/* File Uploads */}
-            <div className="space-y-4">
-              {['prescription', 'hospitalReport'].map(fileType => (
-                <div key={fileType}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">{fileType === 'prescription' ? "Doctor's Prescription" : 'Hospital Report (optional)'}</label>
-                  <input type="file" name={fileType} onChange={handleFileChange} className="w-full" accept=".pdf,.jpg,.jpeg,.png"/>
-                  {formData[fileType] && <p className="text-green-600 text-sm mt-1">✓ {formData[fileType].name} uploaded</p>}
-                </div>
-              ))}
+            {/* Prescription Details */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Prescription Details *</label>
+              <textarea
+                name="prescriptionDetails"
+                value={formData.prescriptionDetails}
+                onChange={handleInputChange}
+                rows={4}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 ${errors.prescriptionDetails ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="Please provide details about the prescription, blood type required, medical condition, doctor's recommendation, etc."
+              />
+              {errors.prescriptionDetails && <p className="text-red-600 text-sm mt-1">{errors.prescriptionDetails}</p>}
             </div>
+
             {/* Submit */}
             <button
               type="submit"

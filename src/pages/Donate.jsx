@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { DatabaseService } from '../services/databaseService'
-import { doc, setDoc } from 'firebase/firestore'
-import { db } from '../services/firebase'
 
 const Donate = () => {
   const navigate = useNavigate()
@@ -93,15 +91,20 @@ const Donate = () => {
       console.log('Current user:', currentUser)
       console.log('Form data:', formData)
 
-      // Save donation request to Firebase
+      // Prepare donation data
       const donationData = {
-        ...formData,
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        bloodGroup: formData.bloodGroup,
+        location: formData.location,
+        availableDate: formData.availableDate,
+        availableTime: formData.availableTime,
+        lastDonation: formData.lastDonation,
         userId: currentUser.uid,
         userEmail: currentUser.email,
         status: 'pending',
-        requestType: 'donation',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        requestType: 'donation'
       }
 
       console.log('Donation data to save:', donationData)
@@ -109,29 +112,38 @@ const Donate = () => {
       // Update user profile with donation information
       console.log('Updating user profile...')
       const profileResult = await DatabaseService.updateUserProfile(currentUser.uid, {
-        ...formData,
-        lastDonation: formData.lastDonation || null,
-        updatedAt: new Date().toISOString()
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        bloodGroup: formData.bloodGroup,
+        location: formData.location,
+        lastDonation: formData.lastDonation || null
       })
 
       console.log('Profile update result:', profileResult)
 
-      // Save to separate donations collection for admin tracking
+      // Save donation using DatabaseService
       console.log('Saving to donations collection...')
-      await setDoc(doc(db, 'donations', `${currentUser.uid}_${Date.now()}`), donationData)
+      const donationResult = await DatabaseService.saveDonation(donationData)
 
-      console.log('Donation saved successfully!')
-      alert('Thank you for your willingness to donate! We will contact you soon with more details.')
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        bloodGroup: '',
-        location: '',
-        availableDate: '',
-        availableTime: '',
-        lastDonation: ''
-      })
+      if (donationResult.success) {
+        console.log('Donation saved successfully!')
+        alert('Thank you for your willingness to donate! We will contact you soon with more details.')
+
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          bloodGroup: '',
+          location: '',
+          availableDate: '',
+          availableTime: '',
+          lastDonation: ''
+        })
+      } else {
+        throw new Error(donationResult.error)
+      }
     } catch (error) {
       console.error('Error saving donation:', error)
       console.error('Error details:', {
@@ -148,7 +160,7 @@ const Donate = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-red-100 pt-16 flex items-center justify-center px-4">
       <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-12">
-        
+
         {/* Left Info */}
         <div className="flex flex-col justify-center space-y-6">
           <h1 className="text-4xl font-bold text-gray-900">Donate Blood</h1>
