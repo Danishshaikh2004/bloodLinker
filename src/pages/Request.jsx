@@ -12,7 +12,8 @@ const Request = () => {
     contact: '',
     bloodGroup: '',
     urgency: '',
-    prescriptionDetails: ''
+    prescriptionDetails: '',
+    hospitalLocation: ''
   })
   const [errors, setErrors] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -57,6 +58,7 @@ const Request = () => {
     if (!formData.bloodGroup) newErrors.bloodGroup = 'Blood group is required'
     if (!formData.urgency) newErrors.urgency = 'Urgency level is required'
     if (!formData.prescriptionDetails.trim()) newErrors.prescriptionDetails = 'Prescription details are required'
+    if (!formData.hospitalLocation.trim()) newErrors.hospitalLocation = 'Hospital location is required'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -84,6 +86,7 @@ const Request = () => {
         bloodGroup: formData.bloodGroup,
         urgency: formData.urgency,
         prescriptionDetails: formData.prescriptionDetails,
+        hospitalLocation: formData.hospitalLocation,
         userId: currentUser.uid,
         userEmail: currentUser.email,
         status: 'pending',
@@ -248,19 +251,33 @@ const Request = () => {
               {errors.urgency && <p className="text-red-600 text-sm mt-1">{errors.urgency}</p>}
             </div>
 
-            {/* Prescription Details */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Prescription Details *</label>
-              <textarea
-                name="prescriptionDetails"
-                value={formData.prescriptionDetails}
-                onChange={handleInputChange}
-                rows={4}
-                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 ${errors.prescriptionDetails ? 'border-red-500' : 'border-gray-300'}`}
-                placeholder="Please provide details about the prescription, blood type required, medical condition, doctor's recommendation, etc."
-              />
-              {errors.prescriptionDetails && <p className="text-red-600 text-sm mt-1">{errors.prescriptionDetails}</p>}
-            </div>
+          {/* Prescription Details */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Prescription Details *</label>
+            <textarea
+              name="prescriptionDetails"
+              value={formData.prescriptionDetails}
+              onChange={handleInputChange}
+              rows={4}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 ${errors.prescriptionDetails ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="Please provide details about the prescription, blood type required, medical condition, doctor's recommendation, etc."
+            />
+            {errors.prescriptionDetails && <p className="text-red-600 text-sm mt-1">{errors.prescriptionDetails}</p>}
+          </div>
+
+          {/* Hospital Location */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hospital Location *</label>
+            <input
+              type="text"
+              name="hospitalLocation"
+              value={formData.hospitalLocation}
+              onChange={handleInputChange}
+              className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-200 ${errors.hospitalLocation ? 'border-red-500' : 'border-gray-300'}`}
+              placeholder="Enter hospital location"
+            />
+            {errors.hospitalLocation && <p className="text-red-600 text-sm mt-1">{errors.hospitalLocation}</p>}
+          </div>
 
             {/* Submit */}
             <button
